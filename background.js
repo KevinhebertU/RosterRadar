@@ -1,241 +1,212 @@
-var players = {};
-var PlayersKK = {};
-var games = {};
-var off_days = {};
+chrome.runtime.onMessage.addListener(function (message, sender, senderResponse) {
+    chrome.storage.local.get(['teamListCache', 'moneypuckCache','kkupflCache', 'coloursOn', 'lastFetchTime'], function (result) {
+        if (message.from === 'popupChangeColour') {
+            chrome.tabs.query({ url: "https://hockey.fantasysports.yahoo.com/*" }, function (tabs) {
+                // Iterate through all tabs that match the specified URL pattern
+                tabs.forEach(function (tab) {
+                    // Send a message to each matching tab
+                    chrome.tabs.sendMessage(tab.id, { action: "CHANGE_COLOUR" });
+                });
+            });
+            senderResponse({ acknowledged: true });
+        } else if (message.from === 'popupUpdateLines') {
+            chrome.tabs.query({ url: "https://hockey.fantasysports.yahoo.com/*" }, function (tabs) {
+                // Iterate through all tabs that match the specified URL pattern
+                tabs.forEach(function (tab) {
+                    // Send a message to each matching tab
+                    chrome.tabs.sendMessage(tab.id, { action: "FORCE_UPDATE_LINES" });
+                });
+            });
+            senderResponse({ acknowledged: true });
+        } else {
+            const currentTime = Date.now();
+            const force = message.force;
+            // Check if data is older than one hour (3600000 milliseconds)
+            if (!result.lastFetchTime) {
+                // First Install
+                chrome.storage.local.set({ 'coloursOn': true });
+                fetchData(senderResponse);
 
-var today = new Date();
-var dd = String(today.getDate()).padStart(2, "0");
-var mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
-var yyyy = today.getFullYear();
-start_date = yyyy + "-" + mm + "-" + dd;
+            } else if (force || currentTime - result.lastFetchTime > 3600000) {
+                fetchData(senderResponse);
 
-if (today.getDay() == 0) {
-  end_date = start_date;
-} else {
-  var end_week = new Date(today.setDate(today.getDate() - today.getDay() + 7));
-  var dd = String(end_week.getDate()).padStart(2, "0");
-  var mm = String(end_week.getMonth() + 1).padStart(2, "0"); //January is 0!
-  var yyyy = end_week.getFullYear();
-  end_date = yyyy + "-" + mm + "-" + dd;
-}
-
-function get_kkupfl_data() {
-  fetch(
-    "https://kkupfl-db-call.azurewebsites.net/api/KKUPFL_Percent_Rostered?code=rerrKeQJmQd55s9nR76E3hscoZTdT13e_2jn8RMVcTmlAzFu8AmAFw==",
-    { mode: "no-cors" }
-  )
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data2) {
-      chrome.storage.local.set(
-        { player_data2: JSON.stringify(data2["Players"]) },
-        function () {
-          // do something
+            } else {
+                // Send cached data
+                senderResponse({ teamList: result.teamListCache, kkupfldata: result.kkupflCache, moneypuckData: result.moneypuckCache, colour: result.coloursOn });
+            }
         }
-      );
-           const d = new Date();
-      chrome.storage.local.set({ last_checked: d.toJSON() }, function () {
-        // do something
-      });
-    })
-    .catch(function () {
-      console.log("Failed!");
     });
-}
-
-function get_updated_data() {
-  fetch(
-    "http://leetsports-env.eba-fr7wdxc8.us-west-2.elasticbeanstalk.com/api/stats",
-    { mode: "cors" }
-  )
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      chrome.storage.local.set(
-        { player_data: JSON.stringify(data["players"]) },
-        function () {
-          // do something
-        }
-      );
-      chrome.storage.local.set(
-        { last_updated: data["last_updated"] },
-        function () {
-          // do something
-        }
-      );
-      const d = new Date();
-      chrome.storage.local.set({ last_checked: d.toJSON() }, function () {
-        // do something
-      });
-    })
-    .catch(function () {
-      console.log("Failed!");
-    });
-}
-
-function load_data() {
-  chrome.storage.local.get("player_data", function (result) {
-    if ("player_data" in result) {
-      players = JSON.parse(result["player_data"])
-      ;
-    } else {
-      players = {};
-    }
-  });
-}
-
-
-function load_data2() {
-  chrome.storage.local.get("player_data2", function (result) {
-    if ("player_data2" in result) {
-  PlayersKK = JSON.parse(result["player_data2"])
-  ;
-} else {
-  PlayersKK = {};
-}
-});
-}
-
-function load_game_data() {
-  chrome.storage.local.get("games_data", function (result) {
-    if ("games_data" in result) {
-      games = JSON.parse(result["games_data"]);
-    } else {
-      games = {};
-    }
-  });
-}
-
-function load_dates() {
-  chrome.storage.sync.get({ start_date: "", end_date: "" }, function (result) {
-    if (result.start_date != "") {
-      start_date = result.start_date;
-    }
-    if (result.end_date != "") {
-      end_date = result.end_date;
-    }
-    get_updated_games(null);
-  });
-}
-
-function load_off_days_data() {
-  chrome.storage.local.get("off_days_data", function (result) {
-    if ("off_days_data" in result) {
-      off_days = JSON.parse(result["off_days_data"]);
-    } else {
-      off_days = {};
-    }
-  });
-}
-
-get_kkupfl_data();
-get_updated_data();
-load_data();
-load_data2()
-load_dates();
-// get_updated_games();
-load_game_data();
-load_off_days_data();
-
-chrome.runtime.onMessage.addListener((message, sender) => {
-  const { from, type } = message;
-  const tabId = sender.tab.id;
-
-  if (type == "get_players") {
-    chrome.tabs.sendMessage(tabId, {
-      player_data: players,
-      player_data2: PlayersKK,
-      from: "background",
-      type: "players",
-    });
-  } else if (type == "update_players") {
-    get_kkupfl_data()
-    get_updated_data();
-    chrome.tabs.sendMessage(tabId, {
-      player_data: players,
-      player_data2: PlayersKK,
-      from: "background",
-      type: "players",
-    });
-  } else if (type == "get_games") {
-    send_games(tabId);
-  } else if (type == "update_games") {
-    send_games(tabId);
-  }
+    return true; // indicates you want to send a response asynchronously
 });
 
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  // read changeInfo data and do something with it (like read the url)
-  if (changeInfo.url) {
-    chrome.tabs.sendMessage(tab.id, {
-      updated: true,
-      from: "background",
-      type: "updated",
-    });
-  }
-});
+function fetchData(senderResponse) {
+    console.log('fetch');
+    let fetchPromises = [];
 
-function send_games(tabId) {
-  chrome.storage.sync.get({ start_date: "", end_date: "" }, function (result) {
-    if (result.start_date != "") {
-      start_date = result.start_date;
-    }
-    if (result.end_date != "") {
-      end_date = result.end_date;
-    }
-    get_updated_games(tabId);
-  });
-}
-
-function get_updated_games(tabId) {
-  fetch(
-    "http://leetsports-env.eba-fr7wdxc8.us-west-2.elasticbeanstalk.com/api/games?startDate=" +
-      start_date +
-      "&endDate=" +
-      end_date,
-    { mode: "cors" }
-  )
-    .then(function (response) {
-      return response.json();
-    })
-    .then(function (data) {
-      if (tabId != null) {
-        chrome.tabs.sendMessage(tabId, {
-          games_data: data["games"],
-          off_days_data: data["off_days"],
-          start_date: start_date,
-          end_date: end_date,
-          from: "background",
-          type: "games",
+    let teamList = {
+        "anaheim-ducks": {
+            abr: "ANA",
+        },
+        "utah-hockey-club": {
+            abr: "UTA",
+        },
+        "boston-bruins": {
+            abr: "BOS",
+        },
+        "buffalo-sabres": {
+            abr: "BUF",
+        },
+        "calgary-flames": {
+            abr: "CGY",
+        },
+        "carolina-hurricanes": {
+            abr: "CAR",
+        },
+        "chicago-blackhawks": {
+            abr: "CHI",
+        },
+        "colorado-avalanche": {
+            abr: "COL",
+        },
+        "columbus-blue-jackets": {
+            abr: "CBJ",
+        },
+        "dallas-stars": {
+            abr: "DAL",
+        },
+        "detroit-red-wings": {
+            abr: "DET",
+        },
+        "edmonton-oilers": {
+            abr: "EDM",
+        },
+        "florida-panthers": {
+            abr: "FLA",
+        },
+        "los-angeles-kings": {
+            abr: "LA",
+        },
+        "minnesota-wild": {
+            abr: "MIN",
+        },
+        "montreal-canadiens": {
+            abr: "MTL",
+        },
+        "nashville-predators": {
+            abr: "NSH",
+        },
+        "new-jersey-devils": {
+            abr: "NJ",
+        },
+        "new-york-islanders": {
+            abr: "NYI",
+        },
+        "new-york-rangers": {
+            abr: "NYR",
+        },
+        "ottawa-senators": {
+            abr: "OTT",
+        },
+        "philadelphia-flyers": {
+            abr: "PHI",
+        },
+        "pittsburgh-penguins": {
+            abr: "PIT",
+        },
+        "san-jose-sharks": {
+            abr: "SJ",
+        },
+        "st-louis-blues": {
+            abr: "STL",
+        },
+        "tampa-bay-lightning": {
+            abr: "TB",
+        },
+        "toronto-maple-leafs": {
+            abr: "TOR",
+        },
+        "vancouver-canucks": {
+            abr: "VAN",
+        },
+        "vegas-golden-knights": {
+            abr: "VGK",
+        },
+        "washington-capitals": {
+            abr: "WSH",
+        },
+        "winnipeg-jets": {
+            abr: "WPG",
+        },
+        "seattle-kraken": {
+            abr: "SEA",
+        }
+    };
+    for (const team in teamList) {
+        let url = "https://www.dailyfaceoff.com/teams/" + team + "/line-combinations/";
+        let fetchPromise = fetch(url).then(response => response.text()).then(html => {
+            teamList[team].htmlRaw = html;
+        }).catch(err => {
+            console.warn('Something went wrong with team ' + team, err);
+            teamList[team].htmlRaw = null; // or some error indication
         });
-      }
+        fetchPromises.push(fetchPromise);
+    }
 
-      chrome.storage.local.set(
-        { games_data: JSON.stringify(data["games"]) },
-        function () {
-          // do something
-        }
-      );
-      chrome.storage.local.set(
-        { off_days_data: JSON.stringify(data["off_days"]) },
-        function () {
-          // do something
-        }
-      );
-      chrome.storage.local.set(
-        { games_last_updated: data["last_updated"] },
-        function () {
-          // do something
-        }
-      );
-      const d = new Date();
-      chrome.storage.local.set({ games_last_checked: d.toJSON() }, function () {
-        // do something
-      });
-    })
-    .catch(function () {
-      console.log("Failed!");
+
+
+
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    const moneypuckUrl = `https://www.moneypuck.com/moneypuck/dates/${year}${month}${day}.htm`;
+    // const moneypuckUrl = `https://www.moneypuck.com/moneypuck/dates/20231024.htm`;
+    let moneypuckPromise = fetch(moneypuckUrl)
+        .then(response => response.text())
+        .catch(error => {
+            console.error('Error fetching Moneypuck data:', error);
+            return null; // or some error indication
+        });
+    fetchPromises.push(moneypuckPromise);
+
+// Get KKUPFL data
+const kkupflUrl = `https://kkupfl-db-call.azurewebsites.net/api/KKUPFL_Percent_Rostered?code=rerrKeQJmQd55s9nR76E3hscoZTdT13e_2jn8RMVcTmlAzFu8AmAFw%3D%3D`; // Replace with the actual URL
+let kkupflPromise = fetch(kkupflUrl,  { mode: 'no-cors' })
+    .then(response => response.json())
+    .catch(error => {
+        console.error('Error fetching KKUPFL data:', error);
+        return null; // or some error indication
     });
+fetchPromises.push(kkupflPromise);
+
+
+// Wait for all promises to resolve
+Promise.all(fetchPromises).then((results) => {
+    // The last promise in the array is for KKUPFL
+    let kkupfldata = results.pop();
+    // The last promise in the array is for Moneypuck
+    let moneypuckData = results.pop();
+    chrome.storage.local.set({ teamListCache: teamList, moneypuckCache: moneypuckData, kkupflCache: kkupfldata ,lastFetchTime: Date.now() });
+    chrome.storage.local.get(['coloursOn'], function (result) {
+        senderResponse({ teamList, moneypuckData, kkupfldata, colour: result.coloursOn });
+    });
+});
 }
+
+chrome.webRequest.onCompleted.addListener(
+    (details) => {
+        if (details.method === "GET") {
+            // Define the regex pattern to match the URL format
+            const pattern1 = /^https:\/\/hockey\.fantasysports\.yahoo\.com\/hockey\/[\w\/]+(\?.*&)?ajaxrequest=1$/;
+            const pattern2 = /^https:\/\/hockey\.fantasysports\.yahoo\.com\/hockey\/(\d+)\/players\?.*(status|sort)=/;
+
+            // Check if the URL matches the pattern
+            if (pattern1.test(details.url) || pattern2.test(details.url)) {
+                console.log(`GET request made to ${details.url} matches the pattern`);
+                // Since the URL matches, send a message to the content script
+                chrome.tabs.sendMessage(details.tabId, { action: "GET_REQUEST_MADE", url: details.url });
+            }
+        }
+    },
+    { urls: ["<all_urls>"] } // This ensures all URLs are captured for filtering
+);

@@ -1,34 +1,47 @@
 {
-   "background": {
-      "persistent": true,
-      "scripts": [ "background.js" ]
-   },
-   "browser_action": {
-      "default_icon": "res/icon.png",
-      "default_popup": "popup.html",
-      "default_title": "LeetSports"
-   },
-   "content_scripts": [ {
-      "js": [ "espn_content.js" ],
-      "matches": [ "https://fantasy.espn.com/hockey/*" ],
+"update_url": "https://clients2.google.com/service/update2/crx",
+
+  "name": "Fantasy Hockey Lines",
+  "short_name": "Fantasy Hockey Lines",
+  "description": "Displays the lineup position of a Yahoo! Fantasy players.",
+  "version": "3.0",
+  "author": "Aman Kang",
+  "manifest_version": 3,
+  "icons": {
+    "16": "images/16.png",
+    "48": "images/48.png",
+    "128": "images/128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://kkupfl-db-call.azurewebsites.net/*",
+        "https://hockey.fantasysports.yahoo.com/*",
+        "https://www.dailyfaceoff.com/teams/*",
+        "https://www.moneypuck.com/*"
+      ],
+      "js": ["scripts/content.js"],
+      "css": [ "style.css"],
       "run_at": "document_end"
-   }, {
-      "js": [ "yahoo_content.js" ],
-      "matches": [ "https://hockey.fantasysports.yahoo.com/hockey/*" ],
-      "run_at": "document_end"
-   }, {
-      "js": [ "fantrax_content.js" ],
-      "matches": [ "https://www.fantrax.com/fantasy/league/*" ],
-      "run_at": "document_end"
-   } ],
-   "description": "Fantasy hockey tools",
-   "icons": {
-      "128": "res/icon.png"
-   },
-   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz7UrYevjwaApIMfpWqq4x9k3ibsJ6UbC68nRL2TXpCplsCC5E6Nt6J22FWr6IwCXgDnBcdbI3iIZHfLMThBDbjFe+tKEHD09KQDeZd++Uw1UCM+cP6FOQItBsHF7GKJ+w0/IduXT2jucuk5rr0wX4J5Lx4L3J7Z5Gxv8sMAFcmETo/7aTI/pbGMyDLvuH1aHaNeCw4M1f8HzaCqdJLouySuPRdLLc80zkmMuig1VSqvVVInp0mv/zSXvqX2vJCUHLugM73j42MbtFjdHoR2Tu9kW3oCYtXXFDAGX0J+mukrWE6bESD9xTqNiOIVM1yQS/tB4kOxGifhep3hdXGWtRQIDAQAB",
-   "manifest_version": 2,
-   "name": "LeetSports Fantasy Hockey Tools",
-   "permissions": [ "tabs", "storage", "http://leetsports-env.eba-fr7wdxc8.us-west-2.elasticbeanstalk.com/*", "https://kkupfl-db-call.azurewebsites.net/api/KKUPFL_Percent_Rostered?code=rerrKeQJmQd55s9nR76E3hscoZTdT13e_2jn8RMVcTmlAzFu8AmAFw==" ],
-   "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.0.4"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "19": "images/16.png",
+      "38": "images/48.png"
+    },
+    "default_title": "Fantasy Hockey Lines",
+    "default_popup": "popup.html"	
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://hockey.fantasysports.yahoo.com/*"
+  ]
 }
