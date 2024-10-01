@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Fantasy Hockey Extension</title>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="popup.js"></script>
+  </head>
+  <body style="width: 350px; text-align: center;">
+    <h1>LeetSports</h1>
+    <p id="last_updated">Last updated at: </p>
+    <a id="feedback" href = "mailto:leetsportsofficial@gmail.com?subject=Feedback">
+      Send Feedback
+    </a>
+    <br/><br/>
+    <button type="button" class="collapsible" style="margin-bottom: 4px;"><i class="fa fa-caret-down"></i>Deployment Settings</button>
+    <div class="content">
+      <table>
+        <tr>
+          <label><input type="checkbox" id="line" checked> <span>Line</span></label>
+        </tr>
+         <tr>
+          <label><input type="checkbox" id="powerplay" checked> <span>Power Play</span></label>
+        </tr>
+        <tr>
+          <label><input type="checkbox" id="penaltykill" checked> <span>Penalty Kill</span></label>
+        </tr>
+    </table>
+      <button id="save_deployment" style="width: 100%; margin-top: 10px;">Save</button>
+    </div>
+    <button type="button" class="collapsible"><i class="fa fa-caret-down"></i>Game Settings</button>
+    <div class="content">
+      <table>
+        <tr>
+          <label><input type="checkbox" id="games_enabled" checked> <span>Games Left</span></label>
+        </tr>
+         <tr>
+          <label><input type="checkbox" id="off_nights_enabled" checked> <span>Off Nights</span></label>
+        </tr>
+        <tr>
+          <label><input type="radio" id="radio_this_week" name="range_type" value="this_week" checked><span>This week</span></label>
+          <label><input type="radio" id="radio_custom_range" name="range_type" value="custom_range"><span>Custom range</span></label>
+        </tr>
+        <tr id="start" style="display: none;">
+          <td>Start Date:</td>
+          <td><input type="date" id="start_date" name="start_date"></td>
+        </tr>
+        <tr id="end" style="display: none;">
+          <td>End Date:</td>
+          <td><input type="date" id="end_date" name="end_date"></td>
+        </tr>
+      </div>
+    </table>
+      <button id="save_games" style="width: 100%; margin-top: 10px;">Save</button>
+    </div>
+  </body>
+</html>
