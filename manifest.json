@@ -1,11 +1,11 @@
 {
 "update_url": "https://clients2.google.com/service/update2/crx",
 
-  "name": "Fantasy Hockey Lines",
-  "short_name": "Fantasy Hockey Lines",
-  "description": "Displays the lineup position of a Yahoo! Fantasy players.",
+  "name": "KKUPFL Roster Radar",
+  "short_name": "KKUPFL Roster Radar",
+  "description": "Displays the lineup position and the KKUPFL Rostered percentage of a Yahoo! Fantasy players.",
   "version": "3.0",
-  "author": "Aman Kang",
+  "author": "The KKUPFL Robots",
   "manifest_version": 3,
   "icons": {
     "16": "images/16.png",
@@ -33,7 +33,7 @@
       "19": "images/16.png",
       "38": "images/48.png"
     },
-    "default_title": "Fantasy Hockey Lines",
+    "default_title": "KKUPFL Roster Radar",
     "default_popup": "popup.html"	
   },
   "permissions": [
